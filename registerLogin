@@ -1,0 +1,209 @@
+package com.saucelabs;
+
+import com.saucelabs.common.SauceOnDemandAuthentication;
+import com.saucelabs.common.SauceOnDemandSessionIdProvider;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import com.saucelabs.junit.ConcurrentParameterized;
+import com.saucelabs.junit.SauceOnDemandTestWatcher;
+
+import java.net.URL;
+import java.util.LinkedList;
+
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import static junit.framework.Assert.*;
+
+
+@RunWith(ConcurrentParameterized.class)
+public class SampleSauceTest implements SauceOnDemandSessionIdProvider {
+
+    public SauceOnDemandAuthentication authentication = new SauceOnDemandAuthentication("mprescott", "4a87d024-b040-4eb9-b7d8-4bb540bc8508");
+
+    @Rule
+    public SauceOnDemandTestWatcher resultReportingTestWatcher = new SauceOnDemandTestWatcher(this, authentication);
+
+    private String browser;
+
+    private String os;
+
+    private String version;
+
+    private String sessionId;
+
+    private WebDriver driver;
+
+    public SampleSauceTest(String os, String version, String browser) {
+
+        super();
+        this.os = os;
+        this.version = version;
+        this.browser = browser;
+
+    }
+
+    @ConcurrentParameterized.Parameters
+    public static LinkedList browsersStrings() {
+        LinkedList browsers = new LinkedList();
+        // browsers.add(new String[]{"OSX 10.6", "28", "firefox"});
+        browsers.add(new String[]{"OSX 10.8", "33", "chrome"});
+        return browsers;
+    }
+
+    @Before
+    public void setUp() throws Exception {
+
+        DesiredCapabilities capabilities = new DesiredCapabilities();
+        capabilities.setCapability(CapabilityType.BROWSER_NAME, browser);
+        if (version != null) {
+            capabilities.setCapability(CapabilityType.VERSION, version);
+        }
+        capabilities.setCapability(CapabilityType.PLATFORM, os);
+        capabilities.setCapability("name", "Website Testing");
+        this.driver = new RemoteWebDriver(
+                new URL("http://" + authentication.getUsername() + ":" + authentication.getAccessKey() + "@ondemand.saucelabs.com:80/wd/hub"),
+                capabilities);
+        this.sessionId = (((RemoteWebDriver) driver).getSessionId()).toString();
+    }
+
+    @Test
+    public void Website() throws Exception {
+
+        // [LOAD] ItsMicah.com
+
+        driver.get("http://www.itsmicah.com/");
+
+        WebDriverWait load1 = new WebDriverWait(driver, 10);
+        load1.until(ExpectedConditions.presenceOfElementLocated(By.id("slider-801-0-2-0")));
+        // [LOAD] Done
+
+        // [ASRT] Assert Page Title
+        String title = driver.getTitle();
+        assertEquals("Go Selenium!", "Go Selenium!", title);
+        // [ASRT] Assert Page Title
+
+        // [VALD] Validations against an element on the page
+
+        // Part 1
+        String siteTitle = driver.findElement(By.id("header")).getText();
+        System.out.println(siteTitle);
+
+        String siteDesc = driver.findElement(By.id("site-description")).getText();
+        System.out.println(siteDesc);
+
+        String tweet = driver.findElement(By.className("twitter-item")).getText();
+        System.out.println(tweet);
+
+        // Part 2
+
+        WebElement header = driver.findElement(By.id("header"));
+        assertEquals("Go Selenium!", "Go Selenium!");
+
+        // [REGISTER]
+        WebElement logins = driver.findElement(By.cssSelector("a[title=\"Log In\"]"));
+        logins.click();
+
+        WebElement register = driver.findElement(By.cssSelector("a[href=\"http://www.itsmicah.com/wp-login.php?action=register\"]"));
+        register.click();
+
+        WebElement rUser = driver.findElement(By.id("user_login"));
+        rUser.sendKeys("BiggestSeleniumFan");
+
+        WebElement rMail = driver.findElement(By.id("user_email"));
+        rMail.sendKeys("admin@itsmicah.com");
+
+        WebElement rPass1 = driver.findElement(By.id("pass1"));
+        rPass1.sendKeys("seleniumrocks");
+
+        WebElement rPass2 = driver.findElement(By.id("pass2"));
+        rPass2.sendKeys("seleniumrocks");
+
+        WebElement rSubmit = driver.findElement(By.id("wp-submit"));
+        rSubmit.click();
+
+        WebDriverWait rLoad = new WebDriverWait(driver, 10);
+        rLoad.until(ExpectedConditions.presenceOfElementLocated(By.id("slider-801-0-2-0")));
+        // [REGISTER]
+
+        // [COMMENT]
+        WebElement posts = driver.findElement(By.cssSelector("a[href=\"http://www.itsmicah.com/selenium-webdriver-testing-part-1-of-an-unknown-amount-of-attempts/\""));
+        posts.click();
+
+        WebDriverWait commentWait = new WebDriverWait(driver, 10);
+        commentWait.until(ExpectedConditions.presenceOfElementLocated(By.linkText("Selenium WebDriver Testing: Part 1 of an Unknown Amount of Attempts")));
+
+        WebElement comment = driver.findElement(By.id("comment"));
+        comment.sendKeys("The test has been automated! Woohoo!");
+
+        WebElement postComment = driver.findElement(By.id("submit"));
+        postComment.click();
+        // [COMMENT]
+
+        // [LOGOUT]
+        Actions actions = new Actions(driver);
+        WebElement hover = driver.findElement(By.xpath("//*[@id=\"wp-admin-bar-my-account\"]/a"));
+        WebElement logout = driver.findElement(By.id("wp-admin-bar-logout"));
+        actions.moveToElement(hover).moveToElement(logout).click().build().perform();
+
+
+        // [LOGOUT]
+
+
+        // [LOGIN]
+        WebDriverWait load3 = new WebDriverWait(driver, 5);
+        load3.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("input[type=\"submit\"][name=\"wp-submit\"]")));
+
+        WebElement user2 = driver.findElement(By.cssSelector("input[id=\"user_login\""));
+        user2.sendKeys("admin");
+
+        WebElement pass2 = driver.findElement(By.cssSelector("input[id=\"user_pass\""));
+        pass2.sendKeys("password");
+
+        WebElement submit2 = driver.findElement(By.cssSelector("input[type=\"submit\"][name=\"wp-submit\"]"));
+        submit2.click();
+
+        WebDriverWait lLoad = new WebDriverWait(driver, 10);
+        lLoad.until(ExpectedConditions.presenceOfElementLocated(By.id("wpadminbar")));
+        // [LOGIN]
+
+        // [POST] WebSite Post
+
+        WebElement post = driver.findElement(By.cssSelector("a[href=\"http://www.itsmicah.com/wp-admin/post-new.php\"]"));
+        post.click();
+
+        WebElement ptitle = driver.findElement(By.cssSelector("input[name=\"post_title\"]"));
+        ptitle.sendKeys("Selenium WebDriver Test a Success!!");
+
+        WebElement text = driver.findElement(By.id("content-html"));
+        text.click();
+
+        WebElement content = driver.findElement(By.cssSelector("textarea[name=\"content\"][id=\"content\"]"));
+        content.sendKeys("If you are seeing this post, it means another test has been a success. I loaded Google Chrome on a remote server. I loaded ItsMicah.com and checked the title and header text. I then created a new user and commented on the first selenium test post from a few days ago.");
+
+        WebElement publish = driver.findElement(By.cssSelector("input[id=\"publish\"][value=\"Publish\"]"));
+        publish.click();
+
+        // [POST] Website Post
+    };
+
+    @After
+    public void tearDown() {
+        driver.quit();
+    }
+
+    @Override
+    public String getSessionId() {
+        return sessionId;
+    }
+}
