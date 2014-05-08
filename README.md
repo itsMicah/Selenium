@@ -20,7 +20,7 @@ Understanding My Work Environment
 
 I am constantly learning and re-evaluating my understanding and usage of Java. It is a difficult task with nothing but the internet, but I can make it happen.
 
-I can prove that I have a very thorough and basic understanding of all of these points. Everything in my tests I understand based on the usage I have achieved.
+I can prove that I have a very thorough and basic understanding of all of these points. Everything in my tests I understand based on the context of the usage.
 
 Where next?
 
