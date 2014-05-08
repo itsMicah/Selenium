@@ -1,0 +1,134 @@
+package com.saucelabs;
+
+import com.saucelabs.common.SauceOnDemandAuthentication;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openqa.selenium.*;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import com.saucelabs.junit.ConcurrentParameterized;
+import com.saucelabs.junit.SauceOnDemandTestWatcher;
+
+import java.net.URL;
+import java.util.LinkedList;
+
+import com.saucelabs.common.SauceOnDemandSessionIdProvider;
+import org.junit.Rule;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+@RunWith(ConcurrentParameterized.class)
+public class SampleSauceTest implements SauceOnDemandSessionIdProvider {
+
+    public SauceOnDemandAuthentication authentication = new SauceOnDemandAuthentication("mprescott", "4a87d024-b040-4eb9-b7d8-4bb540bc8508");
+
+    @Rule
+    public SauceOnDemandTestWatcher resultReportingTestWatcher = new SauceOnDemandTestWatcher(this, authentication);
+
+    private String browser;
+
+    private String os;
+
+    private String version;
+
+    private String sessionId;
+
+    private WebDriver driver;
+
+    public SampleSauceTest(String os, String version, String browser) {
+        super();
+        this.os = os;
+        this.version = version;
+        this.browser = browser;
+    }
+
+    @ConcurrentParameterized.Parameters
+    public static LinkedList browsersStrings() {
+        LinkedList browsers = new LinkedList();
+        // browsers.add(new String[]{"Windows 8.1", "11", "internet explorer"});
+        browsers.add(new String[]{"OSX 10.8", "6", "safari"});
+        return browsers;
+    }
+
+    @Before
+    public void setUp() throws Exception {
+
+        DesiredCapabilities capabilities = new DesiredCapabilities();
+        capabilities.setCapability(CapabilityType.BROWSER_NAME, browser);
+        if (version != null) {
+            capabilities.setCapability(CapabilityType.VERSION, version);
+        }
+        capabilities.setCapability(CapabilityType.PLATFORM, os);
+        capabilities.setCapability("name", "Email, Copy and Paste");
+        this.driver = new RemoteWebDriver(
+                new URL("http://" + authentication.getUsername() + ":" + authentication.getAccessKey() + "@ondemand.saucelabs.com:80/wd/hub"),
+                capabilities);
+        this.sessionId = (((RemoteWebDriver) driver).getSessionId()).toString();
+
+    }
+
+    @Test
+    public void emailCP() throws Exception {
+
+        driver.get("http://www.itsmicah.com");
+
+        WebElement tweet = driver.findElement(By.cssSelector("#post-844 > div > h1 > a"));
+        String text = tweet.getText();
+
+        WebElement loginLink = driver.findElement(By.xpath("//*[@id=\"text-801-1-0-0\"]/h3/span/a/span"));
+        loginLink.click();
+
+        WebDriverWait loginLoad = new WebDriverWait(driver, 10);
+        loginLoad.until(ExpectedConditions.presenceOfElementLocated(By.id("user_login")));
+
+        WebElement user = driver.findElement(By.id("user_login"));
+        user.sendKeys("Micah");
+
+        WebElement pass = driver.findElement(By.id("user_pass"));
+        pass.sendKeys("w3dn3sday4");
+
+        WebElement button = driver.findElement(By.id("wp-submit"));
+        button.click();
+
+        WebDriverWait dashboard = new WebDriverWait(driver, 10);
+        dashboard.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#wp-admin-bar-new-content")));
+
+        WebElement post = driver.findElement(By.cssSelector("a[href=\"http://www.itsmicah.com/wp-admin/post-new.php\"]"));
+        post.click();
+
+        WebDriverWait dashLoad = new WebDriverWait(driver, 10);
+        dashLoad.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("#title")));
+
+        WebElement postTitle = driver.findElement(By.cssSelector("input[name=\"post_title\"]"));
+        postTitle.sendKeys("Selenium Copy and Paste!");
+
+        WebElement contentClick = driver.findElement(By.id("content-html"));
+        contentClick.click();
+
+        WebElement postContent = driver.findElement(By.cssSelector("textarea[name=\"content\"][id=\"content\"]"));
+        postContent.sendKeys(text);
+
+        WebElement checkbox = driver.findElement(By.cssSelector("#in-category-106"));
+        checkbox.click();
+
+        WebElement postPublish = driver.findElement(By.cssSelector("#publish"));
+        postPublish.click();
+
+
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        driver.quit();
+    }
+
+
+    @Override
+    public String getSessionId() {
+        return sessionId;
+    }
+}
