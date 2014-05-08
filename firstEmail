@@ -1,0 +1,151 @@
+package com.saucelabs;
+
+
+import com.saucelabs.common.SauceOnDemandAuthentication;
+import com.saucelabs.common.SauceOnDemandSessionIdProvider;
+import com.saucelabs.junit.ConcurrentParameterized;
+import com.saucelabs.junit.SauceOnDemandTestWatcher;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.net.URL;
+import java.util.LinkedList;
+
+@RunWith(ConcurrentParameterized.class)
+public class SampleSauceTest implements SauceOnDemandSessionIdProvider {
+
+    public SauceOnDemandAuthentication authentication = new SauceOnDemandAuthentication("sauceUser", "sauceKey");
+
+    @Rule
+    public SauceOnDemandTestWatcher resultReportingTestWatcher = new SauceOnDemandTestWatcher(this, authentication);
+
+    private String browser;
+
+    private String os;
+
+    private String version;
+
+    private String sessionId;
+
+    private WebDriver driver;
+
+    public SampleSauceTest(String os, String version, String browser) {
+        super();
+        this.os = os;
+        this.version = version;
+        this.browser = browser;
+    }
+
+    @ConcurrentParameterized.Parameters
+    public static LinkedList browsersStrings() {
+        LinkedList browsers = new LinkedList();
+        browsers.add(new String[]{"Windows 8.1", "11", "internet explorer"});
+        // browsers.add(new String[]{"OSX 10.8", "6", "safari"});
+        return browsers;
+    }
+
+    @Before
+    public void setUp() throws Exception {
+
+        DesiredCapabilities capabilities = new DesiredCapabilities();
+        capabilities.setCapability(CapabilityType.BROWSER_NAME, browser);
+        if (version != null) {
+            capabilities.setCapability(CapabilityType.VERSION, version);
+        }
+        capabilities.setCapability(CapabilityType.PLATFORM, os);
+        capabilities.setCapability("name", "Email One");
+        this.driver = new RemoteWebDriver(
+                new URL("http://" + authentication.getUsername() + ":" + authentication.getAccessKey() + "@ondemand.saucelabs.com:80/wd/hub"),
+                capabilities);
+        this.sessionId = (((RemoteWebDriver) driver).getSessionId()).toString();
+        
+    }
+
+    @Test
+    public void emailTest() throws Exception {
+
+        driver.get("http://www.itsmicah.com/");
+
+        WebDriverWait pageLoad = new WebDriverWait(driver, 10);
+        pageLoad.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"site-logo\"]/a")));
+
+        WebElement connect = driver.findElement(By.cssSelector("#menu-item-818 > a"));
+        connect.click();
+
+        WebDriverWait emailLoad = new WebDriverWait(driver, 10);
+        emailLoad.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id=\"site-logo\"]/a")));
+
+        WebElement name = driver.findElement(By.cssSelector("input[name=\"your-name\"]"));
+        name.sendKeys("admin");
+
+        WebElement email = driver.findElement(By.cssSelector("input[name=\"your-email\"]"));
+        email.sendKeys("admin@itsmicah.com");
+
+        WebElement subject = driver.findElement(By.cssSelector("input[name=\"your-subject\"]"));
+        subject.sendKeys("Selenium is the Jam");
+
+        WebElement content = driver.findElement(By.cssSelector("textarea[name=\"your-message\"]"));
+        content.sendKeys("Moving forward!");
+
+        WebElement send = driver.findElement(By.cssSelector("input[value=\"Send\"][type=\"submit\"]"));
+        send.click();
+
+        WebElement login = driver.findElement(By.xpath("//*[@id=\"menu-item-837\"]/a"));
+        login.click();
+
+        WebDriverWait loginLoad = new WebDriverWait(driver, 10);
+        loginLoad.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector("input[id=\"user_login\"]")));
+
+        WebElement user2 = driver.findElement(By.cssSelector("input[id=\"user_login\""));
+        user2.sendKeys("admin");
+
+        WebElement pass2 = driver.findElement(By.cssSelector("input[id=\"user_pass\""));
+        pass2.sendKeys("password");
+
+        WebElement submit2 = driver.findElement(By.cssSelector("input[type=\"submit\"][name=\"wp-submit\"]"));
+        submit2.click();
+
+        WebDriverWait lLoad = new WebDriverWait(driver, 10);
+        lLoad.until(ExpectedConditions.presenceOfElementLocated(By.id("wpadminbar")));
+
+        // [POST] WebSite Post
+
+        WebElement post = driver.findElement(By.cssSelector("a[href=\"http://www.itsmicah.com/wp-admin/post-new.php\"]"));
+        post.click();
+
+        WebElement ptitle = driver.findElement(By.cssSelector("input[name=\"post_title\"]"));
+        ptitle.sendKeys("Automated Email Sent!");
+
+        WebElement text = driver.findElement(By.id("content-html"));
+        text.click();
+
+        WebElement contents = driver.findElement(By.cssSelector("textarea[name=\"content\"][id=\"content\"]"));
+        contents.sendKeys("Today I wrote a simple script to text the email form from itsmicah.com/connect/. If you are reading this message, everything went well! - Now, I want to start uploading the videos of my SauceLab tests to show proof of success/failure. Have a good one all!");
+
+        WebElement publish = driver.findElement(By.cssSelector("input[id=\"publish\"][value=\"Publish\"]"));
+        publish.click();
+
+
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        driver.quit();
+    }
+
+    @Override
+    public String getSessionId() {
+        return sessionId;
+    }
+}
