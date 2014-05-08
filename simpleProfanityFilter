@@ -28,7 +28,7 @@ public class SampleSauceTest implements SauceOnDemandSessionIdProvider {
     public SauceOnDemandTestWatcher resultReportingTestWatcher = new SauceOnDemandTestWatcher(this, authentication);
 
     private String browser;
-
+ 
     private String os;
 
     private String version;
