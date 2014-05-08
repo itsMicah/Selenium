@@ -24,7 +24,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 @RunWith(ConcurrentParameterized.class)
 public class SampleSauceTest implements SauceOnDemandSessionIdProvider {
 
-    public SauceOnDemandAuthentication authentication = new SauceOnDemandAuthentication("mprescott", "4a87d024-b040-4eb9-b7d8-4bb540bc8508");
+    public SauceOnDemandAuthentication authentication = new SauceOnDemandAuthentication("sauceUser", "sauceKey");
 
     @Rule
     public SauceOnDemandTestWatcher resultReportingTestWatcher = new SauceOnDemandTestWatcher(this, authentication);
