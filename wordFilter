@@ -1,0 +1,107 @@
+package com.saucelabs;
+
+import com.saucelabs.common.SauceOnDemandAuthentication;
+import com.saucelabs.common.SauceOnDemandSessionIdProvider;
+import com.saucelabs.junit.ConcurrentParameterized;
+import com.saucelabs.junit.SauceOnDemandTestWatcher;
+import org.junit.*;
+import org.junit.runner.RunWith;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
+
+import java.net.URL;
+import java.util.*;
+
+import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.MatcherAssert.*;
+
+@RunWith(ConcurrentParameterized.class)
+public class SampleSauceTest implements SauceOnDemandSessionIdProvider {
+
+
+    public SauceOnDemandAuthentication authentication = new SauceOnDemandAuthentication("sauceUser", "sauceKey");
+
+    @Rule
+    public SauceOnDemandTestWatcher resultReportingTestWatcher = new SauceOnDemandTestWatcher(this, authentication);
+
+    private String browser;
+
+    private String os;
+
+    private String version;
+
+    private String sessionId;
+
+    private WebDriver driver;
+
+    public SampleSauceTest(String os, String version, String browser) {
+        super();
+        this.os = os;
+        this.version = version;
+        this.browser = browser;
+    }
+
+    @ConcurrentParameterized.Parameters
+    public static LinkedList browsersStrings() {
+        LinkedList browsers = new LinkedList();
+        // browsers.add(new String[]{"Windows 8.1", "11", "internet explorer"});
+        browsers.add(new String[]{"OSX 10.8", "6", "safari"});
+        return browsers;
+    }
+
+
+    @Before
+    public void setUp() throws Exception {
+
+        DesiredCapabilities capabilities = new DesiredCapabilities();
+        capabilities.setCapability(CapabilityType.BROWSER_NAME, browser);
+        if (version != null) {
+            capabilities.setCapability(CapabilityType.VERSION, version);
+        }
+        capabilities.setCapability(CapabilityType.PLATFORM, os);
+        capabilities.setCapability("name", "Complex Filter 1.5");
+        this.driver = new RemoteWebDriver(
+                new URL("http://" + authentication.getUsername() + ":" + authentication.getAccessKey() + "@ondemand.saucelabs.com:80/wd/hub"),
+                capabilities);
+        this.sessionId = (((RemoteWebDriver) driver).getSessionId()).toString();
+
+    }
+
+    @Test
+    public void filter() throws Exception {
+
+        driver.get("http://www.itsmicah.com/selenium-filter-test/");
+
+        WebElement body = driver.findElement(By.xpath("//*"));
+        String content = body.getText();
+
+        boolean success
+                = content.contains("food")
+                || content.contains("Chariot")
+                || content.contains("Mich");
+        Assert.assertEquals
+                ("content contains 'food', 'Chariot', or 'Mich'", true, success);
+
+        // If the script finds any of the specified words,
+        // it will continue and click on the login button.
+        // I am easily able to change this to a Flag button or any
+        // action needed.
+
+        WebElement login = driver.findElement(By.xpath("//*[@id=\"menu-item-837\"]/a"));
+        login.click();
+    }
+
+        @After
+        public void tearDown() throws Exception {
+            driver.quit();
+        }
+
+        @Override
+        public String getSessionId() {
+            return sessionId;
+        }
+    }
